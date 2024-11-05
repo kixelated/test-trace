@@ -24,7 +24,7 @@
 /// # use logging::info;
 /// # // Note that no test would actually run, regardless of `no_run`,
 /// # // because we do not invoke the function.
-/// #[test_log::test]
+/// #[test_trace::test]
 /// fn it_works() {
 ///   info!("Checking whether it still works...");
 ///   assert_eq!(2 + 2, 4);
@@ -37,7 +37,7 @@
 /// the `#[test]` attribute on a per-module basis:
 /// ```rust,no_run
 /// # mod fordoctest {
-/// use test_log::test;
+/// use test_trace::test;
 ///
 /// #[test]
 /// fn it_still_works() {
@@ -51,7 +51,7 @@
 /// to run async tests:
 /// ```
 /// # mod fordoctest {
-/// use test_log::test;
+/// use test_trace::test;
 ///
 /// #[test(tokio::test)]
 /// async fn it_still_works() {
@@ -59,7 +59,7 @@
 /// }
 /// # }
 /// ```
-pub use test_log_macros::test;
+pub use test_trace_macros::test;
 
 #[cfg(feature = "trace")]
 #[doc(hidden)]

@@ -1,12 +1,15 @@
 [package]
-name = "test-log"
-version = "0.2.16"
-authors = ["Daniel Mueller <deso@posteo.net>"]
+name = "test-trace"
+version = "0.3.0"
+authors = [
+  "Luke Curley <kixelated@gmail.com>",
+  "Daniel Mueller <deso@posteo.net>",
+]
 edition = "2021"
 rust-version = "1.71"
 license = "Apache-2.0 OR MIT"
-homepage = "https://github.com/d-e-s-o/test-log"
-repository = "https://github.com/d-e-s-o/test-log.git"
+homepage = "https://github.com/kixelated/test-trace"
+repository = "https://github.com/kixelated/test-trace.git"
 readme = "README.md"
 categories = [
   "development-tools::testing",
@@ -14,15 +17,9 @@ categories = [
   "config",
   "api-bindings",
 ]
-keywords = [
-  "env_logger",
-  "log",
-  "logging",
-  "testing",
-  "tracing",
-]
+keywords = ["env_logger", "log", "logging", "testing", "tracing"]
 description = """
-A replacement of the #[test] attribute that initializes logging and/or
+A replacement of the #[test] attribute that initializes
 tracing infrastructure before running tests.
 """
 include = ["src/lib.rs", "LICENSE-*", "README.md", "CHANGELOG.md"]
@@ -33,27 +30,37 @@ path = "tests/default_log_filter.rs"
 required-features = ["log", "unstable"]
 
 [features]
-default = ["log", "color"]
-trace = ["dep:tracing-subscriber", "test-log-macros/trace"]
-log = ["dep:env_logger", "test-log-macros/log", "tracing-subscriber?/tracing-log"]
+default = ["trace", "color"]
+trace = ["dep:tracing-subscriber", "test-trace-macros/trace"]
+log = [
+  "dep:env_logger",
+  "test-trace-macros/log",
+  "tracing-subscriber?/tracing-log",
+]
 color = ["env_logger?/auto-color", "tracing-subscriber?/ansi"]
 # Enable unstable features. These are generally exempt from any semantic
 # versioning guarantees.
-unstable = ["test-log-macros/unstable"]
+unstable = ["test-trace-macros/unstable"]
 
 [workspace]
 members = ["macros"]
 
 [dependencies]
-test-log-macros = {version = "0.2.15", path = "macros"}
-tracing-subscriber = {version = "0.3.17", default-features = false, optional = true, features = ["env-filter", "fmt"]}
-env_logger = {version = "0.11", default-features = false, optional = true}
+test-trace-macros = { version = "0.3", path = "macros" }
+tracing-subscriber = { version = "0.3.17", default-features = false, optional = true, features = [
+  "env-filter",
+  "fmt",
+] }
+env_logger = { version = "0.11", default-features = false, optional = true }
 
 [dev-dependencies]
-logging = {version = "0.4.8", package = "log"}
-test-case = {version = "3.1"}
-tokio = {version = "1.0", default-features = false, features = ["rt-multi-thread", "macros"]}
-tracing = {version = "0.1.20"}
+logging = { version = "0.4.8", package = "log" }
+test-case = { version = "3.1" }
+tokio = { version = "1.0", default-features = false, features = [
+  "rt-multi-thread",
+  "macros",
+] }
+tracing = { version = "0.1.20" }
 
 # error: cannot find macro `__lazy_static_internal` in this scope
 #   --> ~/.cargo/registry/src/github.com-1ecc6299db9ec823/sharded-slab-0.1.4/src/tid.rs:33:1

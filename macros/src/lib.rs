@@ -31,7 +31,7 @@ fn parse_attrs(attrs: Vec<Attribute>) -> syn::Result<(AttributeArgs, Vec<Attribu
     let mut ignored_attrs = vec![];
     for attr in attrs {
       let matched = attribute_args.try_parse_attr_single(&attr)?;
-      // Keep only attrs that didn't match the #[test_log(_)] syntax.
+      // Keep only attrs that didn't match the #[test_trace(_)] syntax.
       if !matched {
         ignored_attrs.push(attr);
       }
@@ -98,7 +98,7 @@ struct AttributeArgs {
 
 impl AttributeArgs {
   fn try_parse_attr_single(&mut self, attr: &Attribute) -> syn::Result<bool> {
-    if !attr.path().is_ident("test_log") {
+    if !attr.path().is_ident("test_trace") {
       return Ok(false)
     }
 
@@ -137,7 +137,7 @@ impl AttributeArgs {
     }
 
     // If we couldn't parse the value on the right-hand side because it was some
-    // unexpected type, e.g. #[test_log::log(default_log_filter=10)], return an error.
+    // unexpected type, e.g. #[test_trace::log(default_log_filter=10)], return an error.
     if arg_ref.is_none() {
       return Err(syn::Error::new_spanned(
         &name_value.value,
@@ -157,7 +157,7 @@ fn expand_logging_init(attribute_args: &AttributeArgs) -> Tokens {
   {
     quote! {
       let env_logger_builder = env_logger_builder
-        .parse_env(::test_log::env_logger::Env::default().default_filter_or(#default_log_filter));
+        .parse_env(::test_trace::env_logger::Env::default().default_filter_or(#default_log_filter));
     }
   } else {
     quote! {}
@@ -165,7 +165,7 @@ fn expand_logging_init(attribute_args: &AttributeArgs) -> Tokens {
 
   quote! {
     {
-      let mut env_logger_builder = ::test_log::env_logger::builder();
+      let mut env_logger_builder = ::test_trace::env_logger::builder();
       #add_default_log_filter
       let _ = env_logger_builder.is_test(true).try_init();
     }
@@ -182,27 +182,32 @@ fn expand_logging_init(_attribute_args: &AttributeArgs) -> Tokens {
 fn expand_tracing_init(attribute_args: &AttributeArgs) -> Tokens {
   let env_filter = if let Some(default_log_filter) = &attribute_args.default_log_filter {
     quote! {
-      ::test_log::tracing_subscriber::EnvFilter::builder()
+      ::test_trace::tracing_subscriber::EnvFilter::builder()
         .with_default_directive(
           #default_log_filter
             .parse()
-            .expect("test-log: default_log_filter must be valid")
+            .expect("test-trace: default_log_filter must be valid")
         )
         .from_env_lossy()
     }
   } else {
-    quote! { ::test_log::tracing_subscriber::EnvFilter::from_default_env() }
+    quote! {
+    ::test_trace::tracing_subscriber::EnvFilter::builder()
+      .with_default_directive(
+        ::test_trace::tracing_subscriber::filter::LevelFilter::TRACE.into()
+      ).from_env_lossy()
+    }
   };
 
   quote! {
     {
       let __internal_event_filter = {
-        use ::test_log::tracing_subscriber::fmt::format::FmtSpan;
+        use ::test_trace::tracing_subscriber::fmt::format::FmtSpan;
 
         match ::std::env::var_os("RUST_LOG_SPAN_EVENTS") {
           Some(mut value) => {
             value.make_ascii_lowercase();
-            let value = value.to_str().expect("test-log: RUST_LOG_SPAN_EVENTS must be valid UTF-8");
+            let value = value.to_str().expect("test-trace: RUST_LOG_SPAN_EVENTS must be valid UTF-8");
             value
               .split(",")
               .map(|filter| match filter.trim() {
@@ -212,7 +217,7 @@ fn expand_tracing_init(attribute_args: &AttributeArgs) -> Tokens {
                 "close" => FmtSpan::CLOSE,
                 "active" => FmtSpan::ACTIVE,
                 "full" => FmtSpan::FULL,
-                _ => panic!("test-log: RUST_LOG_SPAN_EVENTS must contain filters separated by `,`.\n\t\
+                _ => panic!("test-trace: RUST_LOG_SPAN_EVENTS must contain filters separated by `,`.\n\t\
                   For example: `active` or `new,close`\n\t\
                   Supported filters: new, enter, exit, close, active, full\n\t\
                   Got: {}", value),
@@ -223,7 +228,7 @@ fn expand_tracing_init(attribute_args: &AttributeArgs) -> Tokens {
         }
       };
 
-      let _ = ::test_log::tracing_subscriber::FmtSubscriber::builder()
+      let _ = ::test_trace::tracing_subscriber::FmtSubscriber::builder()
         .with_env_filter(#env_filter)
         .with_span_events(__internal_event_filter)
         .with_test_writer()

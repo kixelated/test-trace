@@ -7,7 +7,7 @@
 //! ```
 
 
-#[test_log::test]
+#[test_trace::test]
 fn it_works() {
   assert_eq!(2 + 2, 4);
 }
